@@ -2,4 +2,4 @@
 /.vscode
 *.class
 *.iml
-/.idea
+/chip8/.idea
