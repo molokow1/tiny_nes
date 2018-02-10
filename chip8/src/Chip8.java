@@ -1,6 +1,8 @@
+
+
 public class Chip8 {
 
-    private ROM rom;
+//    private ROM rom;
 
     private short[] memory;
     private static final int MEM_SIZE = 4096;
@@ -16,6 +18,8 @@ public class Chip8 {
 
     private short delay_timer;
     private short sound_timer;
+
+    private int skip_inc;
 
     private int opcode;
 
@@ -33,6 +37,7 @@ public class Chip8 {
         stackPtr = 0;
         delay_timer = 0;
         sound_timer = 0;
+        skip_inc = 0;
         this.memory = new short[MEM_SIZE];
         this.v_reg = new short[V_REG_SIZE];
         this.stack = new short[STACK_SIZE];
@@ -61,8 +66,11 @@ public class Chip8 {
         opcode = fetchInstruction();
 
         // Decode and Execute Opcode
-        decodeAndExecute(opcode);
+        skip_inc = decodeAndExecute(opcode);
 
+        if(skip_inc == 0){
+            PC += 2;
+        }
         // Update timers
 
     }
@@ -85,20 +93,24 @@ public class Chip8 {
                         //return from a subroutine - set PC to the top of the stack then substracts 1 from stack pointer
                         PC = stack[stackPtr];
                         stackPtr--;
-                        break;
+                        return 1;
+                        //return command
+//                        break;
                 }
                 break;
             case 0x1000:
                 PC = (short)(opcode & 0x0FFF);
+                //if its a jump command
+                return 1;
                 //jump to location (op & 0x0FFF)
-                break;
+                //break;
 
             case 0x2000:
                 stackPtr++;
                 stack[stackPtr] = PC;
                 PC = (short)(opcode & 0x0FFF);
                 //call subroutine at (op & 0x0FFF)
-                break;
+                return 1;
 
             case 0x3000:
                 if(v_reg[opcode & 0x0F00] == v_reg[opcode & 0x00FF]){
@@ -122,29 +134,42 @@ public class Chip8 {
                 break;
 
             case 0x6000:
-                v_reg[opcode & 0x0F00 >> 8] = (short)(opcode & 0x00FF);
+                v_reg[(opcode & 0x0F00) >> 8] = (short)(opcode & 0x00FF);
                 //set V[op & 0x0F00] = (op & 0x00FF)
                 break;
 
             case 0x7000:
+                v_reg[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
                 //set V[op & 0x0F00] = V[op & 0x0F00] + (op & 0x00FF)
                 break;
 
             case 0x8000:
                 switch(opcode & 0x000F){
                     case 0x0000:
+                        v_reg[(opcode & 0x0F00) >> 8] = v_reg[(opcode & 0x00F0) >> 4];
                         //set V[op & 0x0F00] = V[op & 0x00F0]
                         break;
                     case 0x0001:
+                        v_reg[(opcode & 0x0F00) >> 8] = (short) (v_reg[(opcode & 0x0F00) >> 8] | v_reg[(opcode & 0x00F0) >> 4]);
                         //set V[op & 0x0F00] = V[op & 0x0F00] || V[op & 0x00F0]
                         break;
                     case 0x0002:
+                        v_reg[(opcode & 0x0F00) >> 8] = (short) (v_reg[(opcode & 0x0F00) >> 8] & v_reg[(opcode & 0x00F0) >> 4]);
                         //set V[op & 0x0F00] = V[op & 0x0F00] && V[op & 0x00F0]
                         break;
                     case 0x0003:
                         //set V[op & 0x0F00] = V[op & 0x0F00] XOR V[op & 0x00F0]
+                        v_reg[(opcode & 0x0F00) >> 8] = (short) (v_reg[(opcode & 0x0F00) >> 8] ^ v_reg[(opcode & 0x00F0) >> 4]);
                         break;
                     case 0x0004:
+
+                        int result = (v_reg[(opcode & 0x0F00) >> 8] + v_reg[(opcode & 0x00F0) >> 4]);
+                        v_reg[(opcode & 0x0F00) >> 8] = (short)(result & 0x00FF);
+                        if(result > 255){
+                            VF = 1;
+                        } else {
+                            VF = 0;
+                        }
                         //set V[op & 0x0F00] = V[op & 0x0F00] + V[op & 0x00F0] set VF = carry
                         //if greater than 8 bits then VF = carry, only lowest 8bits are kept.
                         break;
@@ -199,6 +224,15 @@ public class Chip8 {
     public short getPC(){ return PC; }
 
     public short[] getV_reg(){ return v_reg; }
+
+
+    public short getVF(){ return VF; }
+
+    public void printV_reg(){
+        for(int i = 0; i < V_REG_SIZE; i++){
+            System.out.println("V_REG[" + i +"]: " + String.format("0x%08X",v_reg[i]));
+        }
+    }
 
     public static void main(String[] args){
         String romFile = "pong.rom";
