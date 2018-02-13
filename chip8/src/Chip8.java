@@ -1,4 +1,5 @@
 
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Chip8 {
 
@@ -8,10 +9,15 @@ public class Chip8 {
     private static final int MEM_SIZE = 4096;
     private static final int V_REG_SIZE = 16;
     private static final int STACK_SIZE = 16;
+
+    private static final int SCREEN_WIDTH = 64;
+    private static final int SCREEN_HEIGHT = 32;
     private short[] v_reg;
     private short VF;
     private short I;
     private short PC;
+
+    private short[][] displayArray;
 
     private short[] stack;
     private short stackPtr;
@@ -38,6 +44,7 @@ public class Chip8 {
         delay_timer = 0;
         sound_timer = 0;
         skip_inc = 0;
+        displayArray = new short[SCREEN_WIDTH][SCREEN_HEIGHT];
         this.memory = new short[MEM_SIZE];
         this.v_reg = new short[V_REG_SIZE];
         this.stack = new short[STACK_SIZE];
@@ -81,12 +88,19 @@ public class Chip8 {
         return this.memory[PC] << 8 | this.memory[PC + 1];
     }
 
-
+    private void clearDisplay(){
+        for(int i = 0; i < SCREEN_WIDTH; i++){
+            for(int j = 0; j < SCREEN_HEIGHT; j++){
+                displayArray[i][j] = 0;
+            }
+        }
+    }
     public int decodeAndExecute(int opcode){
         switch(opcode & 0xF000){
             case 0x0000:
                 switch(opcode & 0x00FF){
                     case 0x00E0:
+                        clearDisplay();
                         //Clear the display
                         break;
                     case 0x00EE:
@@ -174,18 +188,47 @@ public class Chip8 {
                         //if greater than 8 bits then VF = carry, only lowest 8bits are kept.
                         break;
                     case 0x0005:
-                        //set V[op & 0x0F00] = V[op & 0x0F00] - V[op & 0x00F0] set VF = borrow
-                        //if Vx > Vy then borrow is 1 else 0
+                        //set V[op & 0x0F00] = V[op & 0x0F00] - V[op & 0x00F0] set VF = not borrow
+                        //if Vx > Vy then VF is 1 else 0
+                        if(v_reg[(opcode & 0x0F00) >> 8] > v_reg[(opcode & 0x00F0) >> 4]){
+                            VF = 1;
+                        } else {
+                            VF = 0;
+                        }
+                        v_reg[(opcode & 0x0F00) >> 8] = (short)((v_reg[(opcode & 0x0F00) >> 8] - v_reg[(opcode & 0x00F0) >> 4]) & 0xFF);
+
                         break;
                     case 0x0006:
+                        if((v_reg[(opcode & 0x0F00) >> 8] & 0x0001) == 1){
+                            VF = 1;
+                        } else {
+                            VF = 0;
+                        }
+                        v_reg[(opcode & 0x0F00) >> 8] = (short) (v_reg[(opcode & 0x0F00) >> 8] / 2);
                         //set V[op & 0x0F00] = V[op & 0x0F00] SHR 1
-                        //if the lest-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
+                        //if the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
                         break;
                     case 0x0007:
                         //set V[op & 0x0F00] = V[op & 0x00F0] - V[op & 0x0F00]
+                        if((v_reg[(opcode & 0x00F0) >> 4] > v_reg[(opcode & 0x0F00) >> 4])){
+                            VF = 1;
+                        } else {
+                            VF = 0;
+                        }
+                        v_reg[(opcode & 0x0F00) >> 8] = (short)((v_reg[(opcode & 0x00F0) >> 4] - v_reg[(opcode & 0x0F00) >> 8]) & 0xFF);
                         //if Vy > Vx then VF is set to 1 else 0
                         break;
                     case 0x000E:
+                        short regContent = v_reg[(opcode & 0x0F00) >> 8];
+                        //System.out.println(String.format("REG CONTENT: 0x%08X",regContent));
+                        //System.out.println(String.format("MHS: 0x%08X",(regContent >> 7 & 0x1)));
+                        if ((regContent >> 7 & 0x0001) == 1){
+                            VF = 1;
+                        } else {
+                            VF = 0;
+                        }
+
+                        v_reg[(opcode & 0x0F00) >> 8] = (short)((regContent * 2) & 0xFF);
                         //set V[op & 0x0F00] = V[op & 0x0F00] SHL 1
                         //If the most-significant bit of Vx is 1 then VF is set to 1 other wise 0.
                         //Then Vx is multiplied by 2.
@@ -197,19 +240,27 @@ public class Chip8 {
                 break;
 
             case 0x9000:
+                if(v_reg[(opcode & 0x0F00) >> 8] != v_reg[(opcode & 0x00F0) >> 4]){
+                    PC += 2;
+                }
                 //skip then next instruction if V[op & 0x0F00] != V[op & 0x00F0]
                 break;
 
             case 0xA000:
                 //set I = (opcode & 0x0FFF)
+                I = (short)(opcode & 0x0FFF);
                 break;
 
             case 0xB000:
+                PC = (short)((opcode & 0x0FFF) + v_reg[0]);
                 // PC = (opcode & 0x0FFF) + V0
                 break;
 
             case 0xC000:
-                // V[opcode & 0x0F00] = (random byte) && (opcode & 0x00FF)
+                int randomByte = ThreadLocalRandom.current().nextInt(0, 255 + 1);
+                // V[opcode & 0x0F00] = (random byte) & (opcode & 0x00FF)
+//                System.out.println("Randombyte: " + randomByte);
+                v_reg[(opcode & 0x0F00) >> 8] = (short) (randomByte & (opcode & 0x00FF));
                 break;
 
             case 0xD000:
@@ -227,6 +278,8 @@ public class Chip8 {
 
 
     public short getVF(){ return VF; }
+
+    public short getI(){ return I; }
 
     public void printV_reg(){
         for(int i = 0; i < V_REG_SIZE; i++){

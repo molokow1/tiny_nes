@@ -84,7 +84,52 @@ public class CPUTest {
     }
 
 
-    public void storeToReg(int reg, int num){
+    @Test
+    public void testSubstractionWithRegContent(){
+        storeToReg(5, 0x12);
+        storeToReg(6, 0x13);
+        cpu.decodeAndExecute(0x8655);
+        assertEquals(0x1, cpu.getV_reg()[6],"V reg[6] must be set to 0x1");
+        assertEquals(1, cpu.getVF(), "Should not underflow");
+        cpu.printV_reg();
+        cpu.decodeAndExecute(0x8655);
+        cpu.printV_reg();
+    }
+
+    @Test
+    public void testMultiplyRegContentByTwo(){
+        storeToReg(5,0x12);
+        cpu.decodeAndExecute(0x850E);
+        assertEquals(0x24, cpu.getV_reg()[5], "V reg[5] must be set to 0x24");
+        assertEquals(0, cpu.getVF(), "VF flag remains 0");
+        storeToReg(6,0xFF);
+        cpu.decodeAndExecute(0x860E);
+        assertEquals(0xFE, cpu.getV_reg()[6], "V reg[6] must be set to 0xFE");
+        assertEquals(1, cpu.getVF(), "VF flag is now raised due to overflow.");
+
+    }
+
+    @Test
+    public void testSkipInstructions(){
+        storeToReg(1,0x01);
+        cpu.decodeAndExecute(0x9010);
+        assertEquals(0x202, cpu.getPC(), "PC must be incremented by 2 now.");
+    }
+
+    @Test
+    public void testSetIReg(){
+        cpu.decodeAndExecute(0xA123);
+        assertEquals(0x123, cpu.getI(), "I register must be set to 0x123 now.");
+    }
+
+
+    @Test
+    public void testRandomByte(){
+        cpu.decodeAndExecute(0xC000);
+    }
+
+
+    private void storeToReg(int reg, int num){
         int command = 0x6000;
         command = command | reg << 8 | num;
         cpu.decodeAndExecute(command);
