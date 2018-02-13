@@ -264,12 +264,48 @@ public class Chip8 {
                 break;
 
             case 0xD000:
+                //Dxyn
+                int length = (opcode & 0xF);
+                byte[] spriteArray = generateSpriteArrayFromMemory(I, (short)(length));
+                short x = (short)((opcode & 0x0F00) >> 8);
+                short y = (short)((opcode & 0x00F0) >> 4);
+                drawSprite(x, y, spriteArray, length);
                 break;
             default:
                 break;
 
         }
         return 0;
+    }
+
+    private byte[] generateSpriteArrayFromMemory(short address, short length){
+        byte[] retArr = new byte[length];
+        for(int i = address; i < address + (length / 2); i++){
+            retArr[i * 2] = (byte)(this.memory[i] >> 8 & 0xFF);
+            retArr[i * 2 + 1] = (byte)(this.memory[i] & 0xFF);
+        }
+        return retArr;
+    }
+
+    private void drawSprite(short x, short y, byte[] sprite, int numRows){
+        for(int j = 0; j < y + numRows){
+            for(int i = x; i < x + 8; i++){
+                int currentBit = (sprite[j] >> (8 - (i - x))) & 0x1;
+                short xPos = (short)(i % SCREEN_WIDTH);
+                short yPos = (short)(j % SCREEN_HEIGHT);
+                if(xorPixel(xPos,yPos,currentBit)){
+                    VF = 1;
+                }
+            }
+        }
+    }
+
+    private boolean xorPixel(short x, short y, int value){
+
+        short oldVal = this.displayArray[x][y];
+        displayArray[x][y] = (short) (oldVal ^ value);
+        return oldVal > displayArray[x][y];
+
     }
 
     public short getPC(){ return PC; }
