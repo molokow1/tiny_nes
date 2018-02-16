@@ -58,13 +58,19 @@ public class Chip8 {
 
     private void loadFontSet(ROM rom){
         for(int i = 0; i < rom.getFontContent().length ; i++){
-            this.memory[i] = rom.getFontContent()[i];
+            this.memory[i] = (short) (rom.getFontContent()[i] & 0xFF);
         }
     }
 
     public void printMemContent(){
         for(int i = 0; i < MEM_SIZE; i++){
             System.out.println(this.memory[i]);
+        }
+    }
+
+    public void printMemRange(int min, int max){
+        for(int i = min; i < max; i++){
+            System.out.println(String.format("0x%08X",this.memory[i]));
         }
     }
 
@@ -269,7 +275,11 @@ public class Chip8 {
                 byte[] spriteArray = generateSpriteArrayFromMemory(I, (short)(length));
                 short x = (short)((opcode & 0x0F00) >> 8);
                 short y = (short)((opcode & 0x00F0) >> 4);
-                drawSprite(x, y, spriteArray, length);
+                if(drawSprite(x, y, spriteArray, length)){
+                    VF = 1;
+                } else {
+                    VF = 0;
+                }
                 break;
             default:
                 break;
@@ -280,24 +290,28 @@ public class Chip8 {
 
     private byte[] generateSpriteArrayFromMemory(short address, short length){
         byte[] retArr = new byte[length];
-        for(int i = address; i < address + (length / 2); i++){
-            retArr[i * 2] = (byte)(this.memory[i] >> 8 & 0xFF);
-            retArr[i * 2 + 1] = (byte)(this.memory[i] & 0xFF);
+//        for(int i = address; i < address + (length / 2); i++){
+//            retArr[i * 2] = (byte)(this.memory[i] >> 8 & 0xFF);
+//            retArr[i * 2 + 1] = (byte)(this.memory[i] & 0xFF);
+//        }
+        for(int i = 0; i < length; i++){
+            retArr[i] = (byte)(this.memory[i + address]);
         }
         return retArr;
     }
 
-    private void drawSprite(short x, short y, byte[] sprite, int numRows){
-        for(int j = 0; j < y + numRows){
+    private boolean drawSprite(short x, short y, byte[] sprite, int numRows){
+        boolean erased = false;
+        for(int j = y; j < y + numRows; j++){
             for(int i = x; i < x + 8; i++){
-                int currentBit = (sprite[j] >> (8 - (i - x))) & 0x1;
+                int currentBit = (sprite[j] >> (7 - (i - x))) & 0x1;
                 short xPos = (short)(i % SCREEN_WIDTH);
                 short yPos = (short)(j % SCREEN_HEIGHT);
-                if(xorPixel(xPos,yPos,currentBit)){
-                    VF = 1;
-                }
+                erased = xorPixel(xPos,yPos,currentBit);
+
             }
         }
+        return erased;
     }
 
     private boolean xorPixel(short x, short y, int value){
@@ -306,6 +320,15 @@ public class Chip8 {
         displayArray[x][y] = (short) (oldVal ^ value);
         return oldVal > displayArray[x][y];
 
+    }
+
+    public void drawDisplayArray(){
+        for(int j = 0; j < SCREEN_HEIGHT; j++){
+            for(int i = 0; i < SCREEN_WIDTH; i++){
+                System.out.print(displayArray[i][j] + " ");
+            }
+            System.out.print("\n");
+        }
     }
 
     public short getPC(){ return PC; }

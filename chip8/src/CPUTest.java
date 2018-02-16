@@ -128,6 +128,18 @@ public class CPUTest {
         cpu.decodeAndExecute(0xC000);
     }
 
+    @Test
+    public void testDrawFunction(){
+        cpu.decodeAndExecute(0xA000);
+        cpu.decodeAndExecute(0xD00A);
+//        cpu.printMemRange(0,5);
+        cpu.drawDisplayArray();
+    }
+    @Test
+    public void testDisplayFunction(){
+        cpu.drawDisplayArray();
+    }
+
 
     private void storeToReg(int reg, int num){
         int command = 0x6000;
