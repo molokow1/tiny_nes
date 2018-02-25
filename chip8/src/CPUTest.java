@@ -132,6 +132,8 @@ public class CPUTest {
     public void testDrawFunction(){
         cpu.decodeAndExecute(0xA000);
         cpu.decodeAndExecute(0xD00A);
+//        cpu.decodeAndExecute(0xA005);
+//        cpu.decodeAndExecute(0xD00A);
 //        cpu.printMemRange(0,5);
         cpu.drawDisplayArray();
     }
