@@ -281,6 +281,52 @@ public class Chip8 {
                     VF = 0;
                 }
                 break;
+            case 0xE000:
+                switch (opcode & 0x00FF){
+                    case 0x009E:
+                        skipInstIfKeyPressed(opcode);
+                        break;
+                    case 0x00A1:
+                        skipInstIfKeyNotPressed(opcode);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+
+            case 0xF000:
+                switch (opcode & 0x00FF){
+                    case 0x0007:
+                        storeDelayTimerToReg(opcode);
+                        break;
+                    case 0x000A:
+                        pollKeyPressToStoreKeyValToReg(opcode);
+                        break;
+                    case 0x0015:
+                        setDelayTimerFromReg(opcode);
+                        break;
+                    case 0x0018:
+                        setSoundTimerFromReg(opcode);
+                        break;
+                    case 0x001E:
+                        setIRegWithRegVal(opcode);
+                        break;
+                    case 0x0029:
+                        setIRegWithSpriteLocation(opcode);
+                        break;
+                    case 0x0033:
+                        storeBCDOfRegToMem(opcode);
+                        break;
+                    case 0x0055:
+                        storeRegValsToMem(opcode);
+                        break;
+                    case 0x0065:
+                        storeMemValsToRegs(opcode);
+                        break;
+                    default:
+                        break;
+                }
+
             default:
                 break;
 
@@ -329,6 +375,50 @@ public class Chip8 {
             }
             System.out.print("\n");
         }
+    }
+
+    private void skipInstIfKeyPressed(int opcode){
+
+    }
+
+    private void skipInstIfKeyNotPressed(int opcode){
+
+    }
+
+    private void storeDelayTimerToReg(int opcode){
+
+    }
+
+    private void pollKeyPressToStoreKeyValToReg(int opcode){
+
+    }
+
+    private void setDelayTimerFromReg(int opcode){
+
+    }
+
+    private void setSoundTimerFromReg(int opcode){
+
+    }
+
+    private void setIRegWithRegVal(int opcode){
+
+    }
+
+    private void setIRegWithSpriteLocation(int opcode){
+
+    }
+
+    private void storeBCDOfRegToMem(int opcode){
+
+    }
+
+    private void storeRegValsToMem(int opcode){
+
+    }
+
+    private void storeMemValsToRegs(int opcode){
+        
     }
 
     public short getPC(){ return PC; }
