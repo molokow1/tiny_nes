@@ -149,6 +149,11 @@ public class CPUTest {
         cpu.decodeAndExecute(command);
     }
 
+
+    @Test
+    public void testMemContent(){
+        cpu.printMemRange(0,100);
+    }
     public static void main(String[] args){
     }
 }
