@@ -29,10 +29,13 @@ public class Chip8 {
 
     private int opcode;
 
-    public Chip8(ROM rom){
+    private Keyboard kb;
+
+    public Chip8(ROM rom, Keyboard kb){
         initCPU();
         loadFontSet(rom);
         loadROMtoMem(rom);
+        this.kb = kb;
 //        printMemContent();
     }
 
@@ -378,11 +381,17 @@ public class Chip8 {
     }
 
     private void skipInstIfKeyPressed(int opcode){
-
+        //PC += 2 if the the key with value Vx is pressed (0x0F00)
+        if(this.kb.getCurrentKeyPressed() == (opcode & 0x0F00) >> 8){
+            PC += 2;
+        }
     }
 
     private void skipInstIfKeyNotPressed(int opcode){
-
+        //PC += 2 if the key with value of Vx is not pressed (0x0F00)
+        if(this.kb.getCurrentKeyPressed() != (opcode & 0x0F00) >> 8){
+            PC += 2;
+        }
     }
 
     private void storeDelayTimerToReg(int opcode){
@@ -390,7 +399,21 @@ public class Chip8 {
     }
 
     private void pollKeyPressToStoreKeyValToReg(int opcode){
-
+        //wait for a key press, store the value of the key in Vx (0F00)
+        //poll for this key press as well
+        while(true){
+            if(this.kb.getCurrentKeyPressed() != 0){
+                System.out.println("GOT KEYCODE: " + this.kb.getCurrentKeyPressed());
+                System.out.println("Storing to REGISTER " + ((opcode & 0x0F00) >> 8));
+                this.v_reg[(opcode & 0x0F00) >> 8] = (short) this.kb.getCurrentKeyPressed();
+                break;
+            }
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setDelayTimerFromReg(int opcode){
@@ -454,7 +477,7 @@ public class Chip8 {
         String romFile = "pong.rom";
         String fonts = "./resources/FONTS.chip8";
         ROM rom = new ROM(romFile, fonts);
-        Chip8 cpu = new Chip8(rom);
+        Chip8 cpu = new Chip8(rom, new Keyboard());
         cpu.emulationCycle();
     }
 }

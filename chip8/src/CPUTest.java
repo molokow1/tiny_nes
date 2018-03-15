@@ -4,7 +4,7 @@ public class CPUTest {
     String romFile = "pong.rom";
     String fonts = "./resources/FONTS.chip8";
     ROM rom = new ROM(romFile, fonts);
-    Chip8 cpu = new Chip8(rom);
+    Chip8 cpu = new Chip8(rom, new Keyboard());
 
     @Test
     public void testJumpToAddress(){
@@ -142,6 +142,14 @@ public class CPUTest {
         cpu.drawDisplayArray();
     }
 
+
+    @Test
+    public void testKeyboardFunctions() {
+        TestGUI gui = new TestGUI();
+        cpu = new Chip8(rom, gui.kb);
+        cpu.decodeAndExecute(0xF10A);
+        System.out.println(cpu.getV_reg()[1]);
+    }
 
     private void storeToReg(int reg, int num){
         int command = 0x6000;

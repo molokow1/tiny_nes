@@ -32,10 +32,15 @@ public class TestGUI {
         TestGUI gui = new TestGUI();
         Keyboard kb = gui.kb;
         while(true){
-//            if(kb.isKeyPressed()){
-//               System.out.println("KEY PRESSED: " + kb.getCurrentKeyPressed());
-//            }
-            System.out.println(kb.isKeyPressed());
+            if(kb.getCurrentKeyPressed() != 0){
+                System.out.println(kb.getCurrentKeyPressed());
+            }
+
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
