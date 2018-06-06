@@ -142,6 +142,10 @@ public class CPUTest {
         cpu.drawDisplayArray();
     }
 
+    @Test
+    public void testBCDStore(){
+        cpu.decodeAndExecute(0xA123); //set I reg
+    }
 
     @Test
     public void testKeyboardFunctions() {

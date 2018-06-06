@@ -9,6 +9,7 @@ public class TestGUI {
 
     private Frame mainFrame;
     public Keyboard kb;
+
     public TestGUI(){
         initGUI();
         mainFrame.setVisible(true);

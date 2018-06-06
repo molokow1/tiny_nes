@@ -417,24 +417,24 @@ public class Chip8 {
     }
 
     private void setDelayTimerFromReg(int opcode){
-        delay_timer = v_reg[opcode & 0x0F00 >> 8];
+        delay_timer = v_reg[(opcode & 0x0F00) >> 8];
     }
 
     private void setSoundTimerFromReg(int opcode){
-        sound_timer = v_reg[opcode & 0x0F00 >> 8];
+        sound_timer = v_reg[(opcode & 0x0F00) >> 8];
     }
 
     private void setIRegWithRegVal(int opcode){
-        I += v_reg[opcode & 0x0F00 >> 8];
+        I += v_reg[(opcode & 0x0F00) >> 8];
     }
 
     private void setIRegWithSpriteLocation(int opcode){
-        int spriteNum = opcode & 0x0F00 >> 8;
+        int spriteNum = (opcode & 0x0F00) >> 8;
         I = (short) (spriteNum * 5);
     }
 
     private void storeBCDOfRegToMem(int opcode){
-        short regVal = v_reg[opcode & 0x0F00 >> 8];
+        short regVal = v_reg[(opcode & 0x0F00) >> 8];
         short hundreds = (short) (regVal / 100);
         short tens = (short)(regVal / 10 - hundreds * 10);
         short ones = (short)(regVal - hundreds * 100 - tens * 10);
